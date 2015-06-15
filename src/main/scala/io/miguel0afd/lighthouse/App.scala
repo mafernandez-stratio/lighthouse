@@ -9,7 +9,7 @@ case class Record(key: Int, value: String)
 
 object App {
   def main(args: Array[String]) {
-    val sparkConf = new SparkConf().setAppName("Lighthouse")
+    val sparkConf = new SparkConf().setAppName("Lighthouse").setMaster("local[4]")
     val sc = new SparkContext(sparkConf)
     val sqlContext = new SQLContext(sc)
 
@@ -24,6 +24,8 @@ object App {
     // Once tables have been registered, you can run SQL queries over them.
     println("Result of SELECT *:")
     sqlContext.sql("SELECT * FROM records").collect().foreach(println)
+
+    sc.stop()
   }
 
 }
