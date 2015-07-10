@@ -48,21 +48,6 @@ object CassandraReadRDD {
 
 object CassandraReadDataframe {
 
-  def executeQuery(sqlContext: SQLContext): Unit = {
-    // Once tables have been registered, you can run SQL queries over them.
-    println("Result of SELECT *:")
-
-    val t0 = System.currentTimeMillis
-
-    val result = sqlContext.sql("SELECT * FROM students").collect
-
-    val t1 = System.currentTimeMillis
-
-    println("Elapsed time: " + (t1 - t0) + "ms")
-
-    result.foreach(println)
-  }
-
   def main(args: Array[String]) {
     val conf = new SparkConf(true).set("spark.cassandra.connection.host", "127.0.0.1")
 
@@ -80,9 +65,18 @@ object CassandraReadDataframe {
         |  pushdown "true"
         |)""".stripMargin)
 
-    for(a <- 0 to 100){
-      executeQuery(sqlContext)
-    }
+    // Once tables have been registered, you can run SQL queries over them.
+    println("Result of SELECT *:")
+
+    val t0 = System.currentTimeMillis
+
+    val result = sqlContext.sql("SELECT * FROM students").collect
+
+    val t1 = System.currentTimeMillis
+
+    println("Elapsed time: " + (t1 - t0) + "ms")
+
+    result.foreach(println)
 
     sc.stop()
   }
@@ -113,3 +107,91 @@ object CassandraNative {
 
   }
 }
+
+  object SparkVsNative {
+
+    def executeQueryInSpark(sqlContext: SQLContext, table: String): Long = {
+      // Once tables have been registered, you can run SQL queries over them.
+      println("Result of SELECT *:")
+
+      val query: String = "SELECT * FROM " + table
+
+      val t0 = System.currentTimeMillis
+
+      val result = sqlContext.sql(query).collect
+
+      val t1 = System.currentTimeMillis
+
+      val elapsedTime: Long = t1 - t0
+
+      println("Elapsed time: " + elapsedTime + "ms")
+
+      result.foreach(println)
+
+      elapsedTime
+    }
+
+    def executeTestInSpark(catalog: String, table: String): Long = {
+      val conf = new SparkConf(true).set("spark.cassandra.connection.host", "127.0.0.1")
+
+      val sc = new SparkContext("local[4]", "Lighthouse", conf)
+
+      val sqlContext = new SQLContext(sc)
+
+      sqlContext.sql(
+        "CREATE TEMPORARY TABLE " + table + " USING org.apache.spark.sql.cassandra " +
+          "OPTIONS (keyspace \"" + catalog + "\", table \"" + table + "\", cluster \"Test Cluster\", pushdown \"true\")"
+        .stripMargin)
+
+      var minTime: Long = Long.MaxValue
+
+      for(a <- 0 to 100){
+        val execTime: Long = executeQueryInSpark(sqlContext, table)
+        if(execTime < minTime){
+          minTime = execTime
+        }
+      }
+
+      sc.stop()
+
+      minTime
+    }
+
+    def executeTestInNative(catalog: String, table: String): Long = {
+      val cluster: Cluster = Cluster.builder.addContactPoint("127.0.0.1").build
+
+      val session: Session = cluster.connect
+
+      val query: String = "SELECT * FROM " + catalog + "." + table
+
+      val t0 = System.currentTimeMillis
+
+      val result = session.execute(query)
+
+      val t1 = System.currentTimeMillis
+
+      val elapsedTime: Long = t1 - t0
+
+      println("Elapsed time: " + elapsedTime + "ms")
+
+      println("Result of SELECT *:")
+
+      import scala.collection.JavaConversions._
+
+      result.all().foreach(println)
+
+      cluster.close()
+
+      elapsedTime
+    }
+
+    def main(args: Array[String]) {
+      val catalog: String = "bug"
+      val table: String = "companies"
+      val nativeTime: Long = executeTestInNative(catalog, table)
+      val sparkTime: Long = executeTestInSpark(catalog, table)
+      println("Native: " + nativeTime + "ms")
+      println("Spark: " + sparkTime + "ms")
+    }
+  }
+
