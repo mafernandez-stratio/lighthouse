@@ -31,6 +31,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.10.4</scala.version>
         <spark.version>1.4.0</spark.version>
+        <cassandra.connector.version>1.4.0-M1</cassandra.connector.version>
     </properties>
 
     <dependencies>
@@ -48,6 +49,11 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.10</artifactId>
             <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datastax.spark</groupId>
+            <artifactId>spark-cassandra-connector_2.10</artifactId>
+            <version>${cassandra.connector.version}</version>
         </dependency>
 
     </dependencies>
