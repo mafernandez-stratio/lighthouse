@@ -47,6 +47,22 @@ object CassandraReadRDD {
 }
 
 object CassandraReadDataframe {
+
+  def executeQuery(sqlContext: SQLContext): Unit = {
+    // Once tables have been registered, you can run SQL queries over them.
+    println("Result of SELECT *:")
+
+    val t0 = System.currentTimeMillis
+
+    val result = sqlContext.sql("SELECT * FROM students").collect
+
+    val t1 = System.currentTimeMillis
+
+    println("Elapsed time: " + (t1 - t0) + "ms")
+
+    result.foreach(println)
+  }
+
   def main(args: Array[String]) {
     val conf = new SparkConf(true).set("spark.cassandra.connection.host", "127.0.0.1")
 
@@ -64,18 +80,9 @@ object CassandraReadDataframe {
         |  pushdown "true"
         |)""".stripMargin)
 
-    // Once tables have been registered, you can run SQL queries over them.
-    println("Result of SELECT *:")
-
-    val t0 = System.currentTimeMillis
-
-    val result = sqlContext.sql("SELECT * FROM students").collect
-
-    val t1 = System.currentTimeMillis
-
-    println("Elapsed time: " + (t1 - t0) + "ms")
-
-    result.foreach(println)
+    for(a <- 0 to 100){
+      executeQuery(sqlContext)
+    }
 
     sc.stop()
   }
