@@ -2,6 +2,7 @@ package io.miguel0afd.lighthouse
 
 import com.datastax.driver.core.{Row, Session, Cluster}
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.cassandra.CassandraSQLContext
 import org.apache.spark.{SparkContext, SparkConf}
 
 // One method for defining the schema of an RDD is to make a case class with the desired column
@@ -46,7 +47,7 @@ object CassandraReadRDD {
   }
 }
 
-object CassandraReadDataframe {
+object CassandraReadDataframeDefault {
 
   def main(args: Array[String]) {
     val conf = new SparkConf(true).set("spark.cassandra.connection.host", "127.0.0.1")
@@ -82,6 +83,32 @@ object CassandraReadDataframe {
   }
 }
 
+object CassandraReadDataframe {
+
+  def main(args: Array[String]) {
+
+    val CassandraHost = "127.0.0.1"
+
+    // Tell Spark the address of one Cassandra node:
+    val conf = new SparkConf(true)
+      .set("spark.cassandra.connection.host", CassandraHost)
+      .set("spark.cleaner.ttl", "3600")
+      .setMaster("local[4]")
+      .setAppName("Lighthouse")
+
+    // Connect to the Spark cluster:
+    lazy val sc = new SparkContext(conf)
+
+    val cc = new CassandraSQLContext(sc)
+
+    cc.setKeyspace("highschool")
+    val rdd = cc.cassandraSql("SELECT * FROM students")
+    rdd.collect.foreach(println)
+
+    sc.stop()
+  }
+}
+
 object CassandraNative {
   def main(args: Array[String]) {
 
@@ -104,7 +131,6 @@ object CassandraNative {
     result.all().foreach(println)
 
     cluster.close()
-
   }
 }
 
@@ -185,13 +211,47 @@ object CassandraNative {
       elapsedTime
     }
 
+    def executeTestInSparkCassandra(catalog: String, table: String): Long = {
+
+      val CassandraHost = "127.0.0.1"
+
+      // Tell Spark the address of one Cassandra node:
+      val conf = new SparkConf(true)
+        .set("spark.cassandra.connection.host", CassandraHost)
+        .set("spark.cleaner.ttl", "3600")
+        .setMaster("local[4]")
+        .setAppName("Lighthouse")
+
+      // Connect to the Spark cluster:
+      lazy val sc = new SparkContext(conf)
+
+      val cc = new CassandraSQLContext(sc)
+
+      cc.setKeyspace(catalog)
+
+      var minTime: Long = Long.MaxValue
+
+      for(a <- 0 to 100){
+        val execTime: Long = executeQueryInSpark(cc, table)
+        if(execTime < minTime){
+          minTime = execTime
+        }
+      }
+
+      sc.stop()
+
+      minTime
+    }
+
     def main(args: Array[String]) {
       val catalog: String = "bug"
       val table: String = "companies"
       val nativeTime: Long = executeTestInNative(catalog, table)
       val sparkTime: Long = executeTestInSpark(catalog, table)
+      val sparkCassandraTime: Long = executeTestInSparkCassandra(catalog, table)
       println("Native: " + nativeTime + "ms")
       println("Spark: " + sparkTime + "ms")
+      println("SparkCassandra: " + sparkCassandraTime + "ms")
     }
   }
 
