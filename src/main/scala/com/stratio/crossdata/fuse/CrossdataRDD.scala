@@ -23,7 +23,7 @@ package com.stratio.crossdata.fuse
 
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.{TaskContext, Partition, Dependency, SparkContext}
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{RDDOperationScope, RDD}
 
 import scala.reflect.ClassTag
 

@@ -28,6 +28,3 @@ class CrossdataSQLContext(sc: SparkContext) extends SQLContext(sc){
 
 }
 
-object CrossdataSQLContext {
-
-}
