@@ -23,8 +23,9 @@ package com.stratio.crossdata.fuse
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
 
-class CrossdataSQLContext(sc: SparkContext) extends SQLContext(sc){
+class CrossdataSQLContext(sc: SparkContext) extends HiveContext(sc){
 
 }
 

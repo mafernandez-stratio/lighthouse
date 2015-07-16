@@ -51,6 +51,11 @@
             <version>${spark.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_2.10</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.datastax.spark</groupId>
             <artifactId>spark-cassandra-connector_2.10</artifactId>
             <version>${cassandra.connector.version}</version>

@@ -103,7 +103,32 @@ object CassandraReadDataframe {
     val cc = new CassandraSQLContext(sc)
 
     cc.setKeyspace("highschool")
-    val rdd = cc.cassandraSql("SELECT * FROM students")
+    val df = cc.cassandraSql("SELECT * FROM students")
+    df.collect.foreach(println)
+
+    sc.stop()
+  }
+}
+
+object CrossdataReadDataframe {
+
+  def main(args: Array[String]) {
+
+    val CassandraHost = "127.0.0.1"
+
+    // Tell Spark the address of one Cassandra node:
+    val conf = new SparkConf(true)
+      .set("spark.cassandra.connection.host", CassandraHost)
+      .set("spark.cleaner.ttl", "3600")
+      .setMaster("local[4]")
+      .setAppName("Lighthouse")
+
+    // Connect to the Spark cluster:
+    lazy val sc = new SparkContext(conf)
+
+    val cc = new CrossdataSQLContext(sc)
+
+    val rdd = cc.sql("SELECT * FROM highschool.students")
     rdd.collect.foreach(println)
 
     sc.stop()
@@ -153,7 +178,7 @@ object SparkVsNative {
 
     println("Elapsed time: " + elapsedTime + "ms")
 
-    result.foreach(println)
+    //result.foreach(println)
 
     elapsedTime
   }
@@ -205,7 +230,7 @@ object SparkVsNative {
 
     import scala.collection.JavaConversions._
 
-    result.all().foreach(println)
+    //result.all().foreach(println)
 
     cluster.close()
 
@@ -245,8 +270,8 @@ object SparkVsNative {
   }
 
   def main(args: Array[String]) {
-    val catalog: String = "bug"
-    val table: String = "companies"
+    val catalog: String = "test"
+    val table: String = "insurance"
     val nativeTime: Long = executeTestInNative(catalog, table)
     val sparkTime: Long = executeTestInSpark(catalog, table)
     val sparkCassandraTime: Long = executeTestInSparkCassandra(catalog, table)
@@ -255,29 +280,3 @@ object SparkVsNative {
     println("SparkCassandra: " + sparkCassandraTime + "ms")
   }
 }
-
-object CrossdataReadDataframe {
-
-  def main(args: Array[String]) {
-
-    val CassandraHost = "127.0.0.1"
-
-    // Tell Spark the address of one Cassandra node:
-    val conf = new SparkConf(true)
-      .set("spark.cassandra.connection.host", CassandraHost)
-      .set("spark.cleaner.ttl", "3600")
-      .setMaster("local[4]")
-      .setAppName("Lighthouse")
-
-    // Connect to the Spark cluster:
-    lazy val sc = new SparkContext(conf)
-
-    val cc = new CrossdataSQLContext(sc)
-
-    val rdd = cc.sql("SELECT * FROM highschool.students")
-    rdd.collect.foreach(println)
-
-    sc.stop()
-  }
-}
-
