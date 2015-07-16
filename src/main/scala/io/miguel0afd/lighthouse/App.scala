@@ -10,6 +10,12 @@ import org.apache.spark.{SparkContext, SparkConf}
 // names and types.
 case class Record(key: Int, value: String)
 
+object DefaultMetadata {
+  val cluster = "Test Cluster"
+  val catalog = "test"
+  val table = "insurance"
+}
+
 object MapDataframe {
   def main(args: Array[String]) {
     val sparkConf = new SparkConf().setAppName("Lighthouse").setMaster("local[4]")
@@ -40,7 +46,7 @@ object CassandraReadRDD {
 
     import com.datastax.spark.connector._
 
-    val rdd = sc.cassandraTable("highschool", "students")
+    val rdd = sc.cassandraTable(DefaultMetadata.catalog, DefaultMetadata.table)
     print("Result of count: ")
     println(rdd.count)
 
@@ -58,21 +64,16 @@ object CassandraReadDataframeDefault {
     val sqlContext = new SQLContext(sc)
 
     sqlContext.sql(
-      """CREATE TEMPORARY TABLE students
-        |USING org.apache.spark.sql.cassandra
-        |OPTIONS (
-        |  keyspace "highschool",
-        |  table "students",
-        |  cluster "Test Cluster",
-        |  pushdown "true"
-        |)""".stripMargin)
+      "CREATE TEMPORARY TABLE " + DefaultMetadata.table + " USING org.apache.spark.sql.cassandra OPTIONS " +
+        "(keyspace \"" + DefaultMetadata.catalog + "\", table \"" + DefaultMetadata.table + "\", " +
+        "cluster \"" + DefaultMetadata.cluster + "\", pushdown \"true\")".stripMargin)
 
     // Once tables have been registered, you can run SQL queries over them.
     println("Result of SELECT *:")
 
     val t0 = System.currentTimeMillis
 
-    val result = sqlContext.sql("SELECT * FROM students").collect
+    val result = sqlContext.sql("SELECT * FROM " + DefaultMetadata.table).collect
 
     val t1 = System.currentTimeMillis
 
@@ -102,8 +103,8 @@ object CassandraReadDataframe {
 
     val cc = new CassandraSQLContext(sc)
 
-    cc.setKeyspace("highschool")
-    val df = cc.cassandraSql("SELECT * FROM students")
+    cc.setKeyspace(DefaultMetadata.catalog)
+    val df = cc.cassandraSql("SELECT * FROM " + DefaultMetadata.table)
     df.collect.foreach(println)
 
     sc.stop()
@@ -128,7 +129,7 @@ object CrossdataReadDataframe {
 
     val cc = new CrossdataSQLContext(sc)
 
-    val rdd = cc.sql("SELECT * FROM highschool.students")
+    val rdd = cc.sql("SELECT * FROM " + DefaultMetadata.catalog + "." + DefaultMetadata.table)
     rdd.collect.foreach(println)
 
     sc.stop()
@@ -144,7 +145,7 @@ object CassandraNative {
 
     val t0 = System.currentTimeMillis
 
-    val result = session.execute("SELECT * FROM highschool.students")
+    val result = session.execute("SELECT * FROM " + DefaultMetadata.catalog + "." + DefaultMetadata.table)
 
     val t1 = System.currentTimeMillis
 
@@ -191,9 +192,9 @@ object SparkVsNative {
     val sqlContext = new SQLContext(sc)
 
     sqlContext.sql(
-      "CREATE TEMPORARY TABLE " + table + " USING org.apache.spark.sql.cassandra " +
-        "OPTIONS (keyspace \"" + catalog + "\", table \"" + table + "\", cluster \"Test Cluster\", pushdown \"true\")"
-        .stripMargin)
+      "CREATE TEMPORARY TABLE " + table + " USING org.apache.spark.sql.cassandra OPTIONS " +
+        "(keyspace \"" + catalog + "\", table \"" + table + "\", " +
+        "cluster \"" + DefaultMetadata.cluster + ("\", pushdown \"true\")").stripMargin)
 
     var minTime: Long = Long.MaxValue
 
@@ -270,11 +271,9 @@ object SparkVsNative {
   }
 
   def main(args: Array[String]) {
-    val catalog: String = "test"
-    val table: String = "insurance"
-    val nativeTime: Long = executeTestInNative(catalog, table)
-    val sparkTime: Long = executeTestInSpark(catalog, table)
-    val sparkCassandraTime: Long = executeTestInSparkCassandra(catalog, table)
+    val nativeTime: Long = executeTestInNative(DefaultMetadata.catalog, DefaultMetadata.table)
+    val sparkTime: Long = executeTestInSpark(DefaultMetadata.catalog, DefaultMetadata.table)
+    val sparkCassandraTime: Long = executeTestInSparkCassandra(DefaultMetadata.catalog, DefaultMetadata.table)
     println("Native: " + nativeTime + "ms")
     println("Spark: " + sparkTime + "ms")
     println("SparkCassandra: " + sparkCassandraTime + "ms")
