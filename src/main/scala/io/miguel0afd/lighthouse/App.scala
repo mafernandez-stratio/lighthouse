@@ -1,11 +1,10 @@
 package io.miguel0afd.lighthouse
 
-import com.datastax.driver.core.{Row, Session, Cluster}
-import com.stratio.crossdata.fuse.CrossdataSQLContext
+import com.datastax.driver.core.{Cluster, Session}
 import io.miguel0afd.lighthouse.Calculation.Calculation
-import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.cassandra.CassandraSQLContext
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.{SparkConf, SparkContext}
 
 // One method for defining the schema of an RDD is to make a case class with the desired column
 // names and types.
