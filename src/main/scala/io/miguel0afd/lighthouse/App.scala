@@ -14,8 +14,11 @@ case class Record(key: Int, value: String)
 object DefaultConstants {
   val nIterations = 100
   val cluster = "Test Cluster"
-  val catalog = "test"
-  val table = "insurance"
+  val catalog = "bug"
+  val table = "companies"
+  val secondTable = "counties"
+  val firstJoinField: Any = "cif"
+  val secondJoinField: Any = "id"
 }
 
 object Calculation extends Enumeration {
@@ -374,4 +377,39 @@ object SparkVsNative {
     println("Spark: " + sparkMeanWithPersist + "ms")
     println("SparkCassandra: " + sparkCassMeanWithPersist + "ms")
   }
+
 }
+
+object CassandraJoin {
+
+  def main(args: Array[String]) {
+
+    val CassandraHost = "127.0.0.1"
+
+    // Tell Spark the address of one Cassandra node:
+    val conf = new SparkConf(true)
+      .set("spark.cassandra.connection.host", CassandraHost)
+      .set("spark.cleaner.ttl", "3600")
+      .setMaster("local[4]")
+      .setAppName("Lighthouse")
+
+    // Connect to the Spark cluster:
+    lazy val sc = new SparkContext(conf)
+
+    val cc = new CassandraSQLContext(sc)
+
+    cc.setKeyspace(DefaultConstants.catalog)
+    val df = cc.cassandraSql("SELECT * FROM " + DefaultConstants.table + " JOIN " + DefaultConstants.secondTable +
+      " ON " + DefaultConstants.firstJoinField + "=" + DefaultConstants.secondJoinField)
+
+    val millis = System.currentTimeMillis()
+
+    df.collect.foreach(println)
+
+    println((System.currentTimeMillis-millis) + " Milliseconds")
+
+    sc.stop()
+  }
+}
+
+
