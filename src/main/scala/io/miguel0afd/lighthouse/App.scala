@@ -137,7 +137,7 @@ object CrossdataReadDataframe {
     // Connect to the Spark cluster:
     lazy val sc = new SparkContext(conf)
 
-    val cc = new CrossdataSQLContext(sc)
+    val cc = new SQLContext(sc)
 
     val rdd = cc.sql("SELECT * FROM " + DefaultConstants.catalog + "." + DefaultConstants.table)
     rdd.collect.foreach(println)
