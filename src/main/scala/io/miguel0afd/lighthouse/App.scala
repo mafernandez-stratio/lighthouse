@@ -116,6 +116,10 @@ object CassandraReadDataframe {
     val df = cc.cassandraSql("SELECT * FROM " + DefaultConstants.table)
     df.collect.foreach(println)
 
+    df.registerTempTable("myResult")
+
+    cc.table("myResult")
+
     sc.stop()
   }
 }
@@ -138,8 +142,8 @@ object CrossdataReadDataframe {
 
     val cc = new SQLContext(sc)
 
-    val rdd = cc.sql("SELECT * FROM " + DefaultConstants.catalog + "." + DefaultConstants.table)
-    rdd.collect.foreach(println)
+    val df = cc.sql("SELECT * FROM " + DefaultConstants.catalog + "." + DefaultConstants.table)
+    df.collect.foreach(println)
 
     sc.stop()
   }
@@ -406,6 +410,8 @@ object CassandraJoin {
     df.collect.foreach(println)
 
     println((System.currentTimeMillis-millis) + " Milliseconds")
+
+    df.registerTempTable("joinTest")
 
     sc.stop()
   }
