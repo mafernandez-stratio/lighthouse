@@ -34,6 +34,7 @@ object CommonData {
   
   val TableSize = 100
   val KafkaBroker = "localhost:9092"
+  val ZkQuorum = "localhost:2181"
   val Topic = "lighthouse"
   
 }
@@ -59,7 +60,7 @@ object Fusion extends App {
   val WINDOW_LENGTH = new Duration(5 * 1000)
   val ssc = new StreamingContext(sc, WINDOW_LENGTH)
 
-  val zkQuorum = CommonData.KafkaBroker
+  val zkQuorum = CommonData.ZkQuorum
   val group = "io.miguel0afd.lighthouse"
   val topicMap = Map(CommonData.Topic -> 4)
 
@@ -121,4 +122,27 @@ object Generator extends App {
   }
 
   producer.close
+}
+
+object KafkaTest extends App {
+
+  // Common configuration
+  val sparkConf = new SparkConf(true).setMaster("local[4]").setAppName("Lighthouse - Fusion")
+  val sc = new SparkContext(sparkConf)
+
+  // Streaming
+  val WINDOW_LENGTH = new Duration(5 * 1000)
+  val ssc = new StreamingContext(sc, WINDOW_LENGTH)
+
+  val zkQuorum = CommonData.ZkQuorum
+  val group = "io.miguel0afd.lighthouse"
+  val topicMap = Map(CommonData.Topic -> 4)
+
+  val kafkaDS = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap)
+
+  val windowDStream = kafkaDS.map(_._2).window(WINDOW_LENGTH)
+  windowDStream.foreachRDD(line => println(line.collect.mkString(", ")))
+
+  ssc.start()
+  ssc.awaitTermination()
 }
