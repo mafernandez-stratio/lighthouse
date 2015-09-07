@@ -57,7 +57,7 @@ object Fusion extends App {
   df.registerTempTable("persons")
 
   // Streaming
-  val WINDOW_LENGTH = new Duration(5 * 1000)
+  val WINDOW_LENGTH = new Duration(6 * 1000)
   val ssc = new StreamingContext(sc, WINDOW_LENGTH)
 
   val zkQuorum = CommonData.ZkQuorum
@@ -66,8 +66,19 @@ object Fusion extends App {
 
   val kafkaDS = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap)
 
+  new Array[String](0).map(_.split(", ")).map(line => new Event(line(0).trim.toInt, line(1).trim.toInt))
+
   val windowDStream = kafkaDS.map(_._2).window(WINDOW_LENGTH)
-  windowDStream.foreachRDD(line => line.toDF().registerTempTable("lines"))
+  windowDStream.foreachRDD(line => line.map(i => {
+    val event = i.split(",")
+    new Event(event(0).trim.toInt, event(1).trim.toInt)
+  }).toDF().registerTempTable("lines"))
+
+  /*
+  windowDStream.foreachRDD(line => line.map(_.split(","))
+    .map(event => new Event(event(0).trim.toInt, event(1).trim.toInt))
+    .toDF().registerTempTable("lines"))
+  */
 
   val fusion = sqlContext.sql("SELECT * FROM persons INNER JOIN lines ON persons.id = lines.id")
   fusion.foreach(println)
