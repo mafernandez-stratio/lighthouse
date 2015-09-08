@@ -52,7 +52,7 @@ object Fusion extends App {
   val fairy = Fairy.create
 
   val df = sc.parallelize((1 to CommonData.TableSize)
-    .map(i => Person(i, fairy.person().firstName))).toDF()
+    .map(i => Person(i, fairy.person().firstName))).toDF("id", "firstName")
 
   df.registerTempTable("persons")
 
@@ -66,22 +66,15 @@ object Fusion extends App {
 
   val kafkaDS = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap)
 
-  new Array[String](0).map(_.split(", ")).map(line => new Event(line(0).trim.toInt, line(1).trim.toInt))
-
   val windowDStream = kafkaDS.map(_._2).window(WINDOW_LENGTH)
-  windowDStream.foreachRDD(line => line.map(i => {
-    val event = i.split(",")
-    new Event(event(0).trim.toInt, event(1).trim.toInt)
-  }).toDF().registerTempTable("lines"))
-
-  /*
-  windowDStream.foreachRDD(line => line.map(_.split(","))
-    .map(event => new Event(event(0).trim.toInt, event(1).trim.toInt))
-    .toDF().registerTempTable("lines"))
-  */
-
-  val fusion = sqlContext.sql("SELECT * FROM persons INNER JOIN lines ON persons.id = lines.id")
-  fusion.foreach(println)
+  val linesDF = windowDStream.foreachRDD(line => {
+    line.map(i => {
+      val event = i.split(",")
+      new Event(event(0).trim.toInt, event(1).trim.toInt)
+    }).toDF("id", "age").registerTempTable("lines")
+    val fusion = sqlContext.sql("SELECT * FROM persons INNER JOIN lines ON persons.id = lines.id")
+    fusion.foreach(println)
+  })
 
   ssc.start()
   ssc.awaitTermination()
