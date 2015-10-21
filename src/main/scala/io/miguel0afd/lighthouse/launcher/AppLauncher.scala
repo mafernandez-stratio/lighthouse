@@ -27,23 +27,24 @@ import org.apache.spark.launcher.SparkLauncher
 
 object AppLauncher extends App {
 
-  private def runApp(name: String): Unit = {
+  private def runApp(name: String, mainClass: String): Unit = {
     val sparkApp = new SparkLauncher()
       .setSparkHome("/Users/miguelangelfernandezdiaz/workspace/spark-1.5.1-bin-hadoop2.6")
       .setAppResource("/Users/miguelangelfernandezdiaz/workspace/lighthouse/target/lighthouse-0.1-SNAPSHOT.jar")
-      .setMainClass("io.miguel0afd.lighthouse.launcher.WriteDate")
+      .setMainClass(mainClass)
       .setMaster("spark://Miguels-MacBook-Pro.local:7077")
       .launch()
 
-    new Thread(new ResultTracker("Input", sparkApp.getInputStream)).start()
-    new Thread(new ResultTracker("Error", sparkApp.getErrorStream)).start()
+    new Thread(new ResultTracker(s"[Input] [$name]", sparkApp.getInputStream)).start()
+    new Thread(new ResultTracker(s"[Error] [$name]", sparkApp.getErrorStream)).start()
 
     val result = sparkApp.waitFor()
 
-    println(s"[${name}] Result: " + result)
+    println(s"[$name] Result: " + result)
   }
 
-  runApp("AppLauncher")
+  runApp("Blocking_App", "io.miguel0afd.lighthouse.launcher.BlockingApp")
+  runApp("Calendar_App", "io.miguel0afd.lighthouse.launcher.WriteDate")
 }
 
 class ResultTracker(name: String, is: InputStream) extends Runnable {
