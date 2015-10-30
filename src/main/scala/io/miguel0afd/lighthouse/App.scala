@@ -27,7 +27,7 @@ object Calculation extends Enumeration {
 
 object MapDataframe {
   def main(args: Array[String]) {
-    val sparkConf = new SparkConf().setAppName("Lighthouse").setMaster("local[4]")
+    val sparkConf = new SparkConf().setAppName("Lighthouse").setMaster("local[*]")
     val sc = new SparkContext(sparkConf)
     val sqlContext = new SQLContext(sc)
 
@@ -51,7 +51,7 @@ object CassandraReadRDD {
   def main(args: Array[String]) {
     val conf = new SparkConf(true).set("spark.cassandra.connection.host", "127.0.0.1")
 
-    val sc = new SparkContext("local[4]", "Lighthouse", conf)
+    val sc = new SparkContext("local[*]", "Lighthouse", conf)
 
     import com.datastax.spark.connector._
 
@@ -68,7 +68,7 @@ object CassandraReadDataframeDefault {
   def main(args: Array[String]) {
     val conf = new SparkConf(true).set("spark.cassandra.connection.host", "127.0.0.1")
 
-    val sc = new SparkContext("local[4]", "Lighthouse", conf)
+    val sc = new SparkContext("local[*]", "Lighthouse", conf)
 
     val sqlContext = new SQLContext(sc)
 
@@ -104,7 +104,7 @@ object CassandraReadDataframe {
     val conf = new SparkConf(true)
       .set("spark.cassandra.connection.host", CassandraHost)
       .set("spark.cleaner.ttl", "3600")
-      .setMaster("local[4]")
+      .setMaster("local[*]")
       .setAppName("Lighthouse")
 
     // Connect to the Spark cluster:
@@ -134,7 +134,7 @@ object CrossdataReadDataframe {
     val conf = new SparkConf(true)
       .set("spark.cassandra.connection.host", CassandraHost)
       .set("spark.cleaner.ttl", "3600")
-      .setMaster("local[4]")
+      .setMaster("local[*]")
       .setAppName("Lighthouse")
 
     // Connect to the Spark cluster:
@@ -198,7 +198,7 @@ object SparkVsNative {
   def executeTestInSpark(catalog: String, table: String, calculation: Calculation, persist: Boolean = false): Long = {
     val conf = new SparkConf(true).set("spark.cassandra.connection.host", "127.0.0.1")
 
-    val sc = new SparkContext("local[4]", "Lighthouse", conf)
+    val sc = new SparkContext("local[*]", "Lighthouse", conf)
 
     val sqlContext = new SQLContext(sc)
 
@@ -296,7 +296,7 @@ object SparkVsNative {
     val conf = new SparkConf(true)
       .set("spark.cassandra.connection.host", CassandraHost)
       .set("spark.cleaner.ttl", "3600")
-      .setMaster("local[4]")
+      .setMaster("local[*]")
       .setAppName("Lighthouse")
 
     // Connect to the Spark cluster:
@@ -393,7 +393,7 @@ object CassandraJoin {
     val conf = new SparkConf(true)
       .set("spark.cassandra.connection.host", CassandraHost)
       .set("spark.cleaner.ttl", "3600")
-      .setMaster("local[4]")
+      .setMaster("local[*]")
       .setAppName("Lighthouse")
 
     // Connect to the Spark cluster:

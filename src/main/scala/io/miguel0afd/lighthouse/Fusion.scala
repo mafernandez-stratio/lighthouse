@@ -42,7 +42,7 @@ object CommonData {
 object Fusion extends App {
 
   // Common configuration
-  val sparkConf = new SparkConf(true).setMaster("local[4]").setAppName("Lighthouse - Fusion")
+  val sparkConf = new SparkConf(true).setMaster("local[*]").setAppName("Lighthouse - Fusion")
   val sc = new SparkContext(sparkConf)
 
   // Batch
@@ -131,7 +131,7 @@ object Generator extends App {
 object KafkaTest extends App {
 
   // Common configuration
-  val sparkConf = new SparkConf(true).setMaster("local[4]").setAppName("Lighthouse - Fusion")
+  val sparkConf = new SparkConf(true).setMaster("local[*]").setAppName("Lighthouse - Fusion")
   val sc = new SparkContext(sparkConf)
 
   // Streaming
