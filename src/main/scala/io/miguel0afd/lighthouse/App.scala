@@ -418,3 +418,25 @@ object CassandraJoin {
 }
 
 
+object TestUDF {
+  def main(args: Array[String]) {
+    val sparkConf = new SparkConf().setAppName("Lighthouse").setMaster("local[*]")
+    val sc = new SparkContext(sparkConf)
+    val sqlContext = new SQLContext(sc)
+    sqlContext.udf.register("randomize", (n: Int) => n*scala.util.Random.nextInt)
+
+    // Importing the SQL context gives access to all the SQL functions and implicit conversions.
+    import sqlContext.implicits._
+
+    val df = sc.parallelize((1 to DefaultConstants.nIterations).map(i => Person(i, s"val_$i"))).toDF()
+    // Any RDD containing case classes can be registered as a table.  The schema of the table is
+    // automatically inferred using scala reflection.
+    df.registerTempTable("people")
+
+    // Once tables have been registered, you can run SQL queries over them.
+    println("Result of SELECT *:")
+    sqlContext.sql("SELECT randomize(id), firstName  FROM people").collect().foreach(println)
+
+    sc.stop()
+  }
+}
